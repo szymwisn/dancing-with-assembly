@@ -20,7 +20,7 @@ BUFF_SIZE = 1000
 .text
 .globl _start
 _start:
-	movl $0, %ecx				# wyzerowanie licznika
+	movl $2, %ecx				# 0 i 1 nie sa liczbami pierwszymi
 	
 	# wypelnienie tablicy liczbami
 	fill_array:
@@ -35,50 +35,46 @@ _start:
 	# przejdz do kolejnej cyfry
 	# push cyfry, ktore nie sa ustawione na -1 na stos
 	
-	movl $0, %ecx
+	movl $2, %ecx
 
 	array_iteration:
 		cmpl $-1, NUM_ARRAY(,%ecx,4)	# sprawdzenie czy liczba juz wykluczona
-		jne cross_out
-		inc %ecx
-		cmpl $MAX_VAL, %ecx
-		jl array_iteration
-		jmp collect_prime_numbers
+		jne cross_out			# jesli nie wukluczona - sprawdzam ja
+		inc %ecx			# inkrementuje licznik	
+		mov %ecx, %edi			# licznik wewnetrzny w edi
+		cmpl $MAX_VAL, %ecx		# sprawdzam czy sprawdzono cala tablice
+		jl array_iteration		# jesli nie - przechodze do kolejnej iteracji
+		jmp collect_prime_numbers	# jesli tak - przechodze do zbierania liczb
 
-	cross_out:
-		mov %ecx, %edi			# wskaznik wewnetrzny w edi
+	should_cross_out:
 		inc %edi			# nie musze sprawdzac liczby samej z soba, inkrementuje licznik
-		cmpl $-1, NUM_ARRAY(,%edi,4)
-		je cross_out			# liczba byla juz wykluczona
-		cmpl $MAX_VAL, %edi		
-		je array_iteration		# wszystkie liczby w petli wewn. sprawdzone
+		cmpl $-1, NUM_ARRAY(,%edi,4)	# sprawdzam czy liczba juz wykluczona
+		je should_cross_out		# jesli tak - przechodze do kolejnej
+		cmpl $MAX_VAL, %edi		# sprawzam czy licznik petli wewn. skonczony	
+		je array_iteration		# jesli tak - wszystkie liczby w petli wewn. sprawdzone
 		movl NUM_ARRAY(,%edi,4), %eax	# przechowanie wartosci wewnetrznej petli w eax
 		divl NUM_ARRAY(,%ecx,4)		# podziel wartosc z petli wewnetrznej przez wartosc w petli zewnetrznej
-		cmpl $0, %edx
-		jne cross_out			# jesli liczba w petli wewnetrznej nie jest wielokrotnoscia liczby z petli
+		cmpl $0, %edx			# jesli reszta wynosi 0 to znaczy ze liczba z petli wewnetrznej jest
+						# wielokrotnoscia liczby z petli zewnetrznej - wykreslam ja
+		jne should_cross_out		# jesli liczba w petli wewnetrznej nie jest wielokrotnoscia liczby z petli
 						# zewnetrznej nie wykreslam jej
-		movl $-1, NUM_ARAY(,%edi,4)	# wykreslenie liczby
-		jmp cross_out
+	cross_out:
+		movl $-1, NUM_ARRAY(,%edi,4)	# wykreslenie liczby
+		jmp should_cross_out		# kolejna iteracja petli wewnetrznej
 
-	movl $0, %ecx
+	movl $1, %ecx
 	
 	collect_prime_numbers:
-		inc %ecx
-		cmpl $-1, NUM_ARRAY(,%ecx,4)
-		je collect_prime_numbers
-		inc $ecx
-		cmpl $
-				
-				
-	
+		inc %ecx			# inkrementacja licznika
+		cmpl $-1, NUM_ARRAY(,%ecx,4)	# sprawdzenie czy liczba jest wykreslona
+		je collect_prime_numbers	# jesli tak - przechodze do kolejnej iteracji
+		cmpl $MAX_VAL, %ecx		# sprawdzenie czy wszystkie liczby sprawdzone
+		#TODO: tu blad
+		je exit				# jesli tak - konczymy
+		#pushl NUM_ARRAY(,%ecx,4)	# spushowanie liczby pierwszej na stos
+		#movl NUM_ARRAY(,%ecx,4), %ebx	#
+		#jmp collect_prime_numbers	# kolejna iteracja
 
-	# wypisanie ciagu znakow na ekranie
-	#write:
-	#	movl $BUFF_SIZE, %edx
-	#	movl $BUFFER, %ecx
-	#	movl $STDOUT, %ebx
-	#	movl $WRITE, %eax
-	#	int $SYSCALL32
 
 	exit:
 		movl $EXIT, %eax
