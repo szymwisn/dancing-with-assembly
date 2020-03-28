@@ -20,14 +20,21 @@ BUFF_SIZE = 1000
 .text
 .globl _start
 _start:
-	push $MAX_VAL
+
+	movq $MAX_VAL, %rbx
+	pushq %rbx
 	call initialize
+	addq $8, %rsp
 
-	push $MAX_VAL
+	movq $MAX_VAL, %rbx
+	pushq %rbx
 	call find_prime_numbers
+	addq $8, %rsp
 
-	push $MAX_VAL
+	movq $MAX_VAL, %rbx
+	pushq %rbx
 	call collect_prime_numbers
+	addq $8, %rsp	
 
 	exit:
 		movl $EXIT, %eax
@@ -43,6 +50,10 @@ _start:
 	initialize:
 		pushq %rbp				# zapisanie starego base pointera
 		movq %rsp, %rbp				# ustawienie stack pointera base pointerem
+		subq $8, %rsp				# miejsce dla tzw. local storage
+	
+		movl 16(%rbp), %ebx			# pierwszy argument funkcji
+		movl %ebx, -8(%rbp)			# wpisanie argumentu do zmiennej lokalnej
 	
 		movl $0, %ecx
 	
@@ -50,10 +61,10 @@ _start:
 		fill_array:
 			movl %ecx, NUM_ARRAY(,%ecx,4)	# wpisanie wartosci do tablicy
 			inc %ecx			# inkrementacja licznika
-			cmpl $MAX_VAL, %ecx			# sprawdzenie czy licznik osiagnal wartosc max
+			cmpl -8(%rbp), %ecx		# sprawdzenie czy licznik osiagnal wartosc max
 			jl fill_array 			# jesli nie - kontynuuj wypelnianie tablicy
 
-		movl %ebx, %ecx			# wypelnienie ostatniej cyfry
+		movl %ebx, %ecx				# wypelnienie ostatniej cyfry
 		movl %ecx, NUM_ARRAY(,%ecx,4);		# -
 		
 		movq %rbp, %rsp				# przywrocenie stack pointera
@@ -65,6 +76,10 @@ _start:
 	find_prime_numbers:
 		pushq %rbp
 		movq %rsp, %rbp
+		subq $8, %rsp		
+	
+		movl 16(%rbp), %ebx
+		movl %ebx, -8(%rbp)
 		
 		movl $1, %ecx
 
@@ -73,7 +88,7 @@ _start:
 			mov %ecx, %edi			# licznik wewnetrzny w edi
 			cmpl $-1, NUM_ARRAY(,%ecx,4)	# sprawdzenie czy liczba juz wykluczona
 			jne should_cross_out		# jesli nie wukluczona - sprawdzam ja
-			cmpl $MAX_VAL, %ecx		# sprawdzam czy sprawdzono cala tablice
+			cmpl -8(%rbp), %ecx		# sprawdzam czy sprawdzono cala tablice
 			jl array_iteration		# jesli nie - przechodze do kolejnej iteracji
 			movl $1, %ecx			# ustawienie licznika dla collect_prime_numbers
 			jmp collect_prime_numbers	# jesli tak - przechodze do zbierania liczb
@@ -89,16 +104,16 @@ _start:
 			movl $0, %edx			# wyzerowanie reszty
 			divl %ebx			# podziel wartosc z petli wewnetrznej przez wartosc w petli zewnetrznej
 			cmpl $0, %edx			# jesli reszta wynosi 0 to znaczy ze liczba z petli wewnetrznej jest
-						# wielokrotnoscia liczby z petli zewnetrznej - wykreslam ja
+							# wielokrotnoscia liczby z petli zewnetrznej - wykreslam ja
 			je cross_out			# jesli liczba w petli wewnetrznej jest wielokrotnoscia liczby z petli
-						# zewnetrznej wykreslam ja		
-			cmpl $MAX_VAL, %edi		# sprawdzam czy licznik petli wewn. skonczony	
+							# zewnetrznej wykreslam ja		
+			cmpl -8(%rbp), %edi		# sprawdzam czy licznik petli wewn. skonczony	
 			je array_iteration		# jesli tak - wszystkie liczby w petli wewn. sprawdzone
 			jmp should_cross_out		# przejscie do kolejnej liczby w petli wewnetrznej	
 
 		cross_out:
 			movl $-1, NUM_ARRAY(,%edi,4)	# wykreslenie liczby
-			cmpl $MAX_VAL, %edi		# sprawdzenie czy ostatnia liczba
+			cmpl -8(%rbp), %edi		# sprawdzenie czy ostatnia liczba
 			je array_iteration		# jesli ostatnia - wszystkie liczby w petli wewn. sprawdzone
 			jmp should_cross_out		# kolejna iteracja petli wewnetrznej
 
@@ -110,7 +125,11 @@ _start:
 	collect_prime_numbers:
 		pushq %rbp
 		movq %rsp, %rbp	
-	
+		subq $8, %rsp	
+
+		movl 16(%rbp), %ebx
+		movl %ebx, -8(%rbp)
+		
 		inc %ecx			# inkrementacja licznika
 		cmpl $MAX_VAL + 1, %ecx		# jesli cyfra poza skala -
 		je exit				# mozna skonczyc iterowac
@@ -122,5 +141,4 @@ _start:
 		movq %rbp, %rsp
 		popq %rbp
 		ret
-
 
