@@ -10,7 +10,7 @@ ACCESS = 0666
 CR_WRONLY_TR = 03101
 RDONLY = 0
 
-MAX_VAL = 6
+MAX_VAL = 121
 BUFF_SIZE = 1000
 
 .bss
@@ -41,7 +41,7 @@ _start:
 		jne should_cross_out		# jesli nie wukluczona - sprawdzam ja
 		cmpl $MAX_VAL, %ecx		# sprawdzam czy sprawdzono cala tablice
 		jl array_iteration		# jesli nie - przechodze do kolejnej iteracji
-		jmp exit			# jesli tak - przechodze do zbierania liczb
+		jmp collect_prime_numbers	# jesli tak - przechodze do zbierania liczb
 
 	should_cross_out:
 		inc %edi			# nie musze sprawdzac liczby samej z soba, inkrementuje licznik
@@ -66,6 +66,19 @@ _start:
 		cmpl $MAX_VAL, %edi
 		je array_iteration
 		jmp should_cross_out		# kolejna iteracja petli wewnetrznej
+
+	movl $1, %ecx
+
+	collect_prime_numbers:
+		inc %ecx
+		cmpl $MAX_VAL + 1, %ecx
+		je exit
+		cmpl $-1, NUM_ARRAY(,%ecx,4)
+		je collect_prime_numbers
+		cmpl $MAX_VAL, %ecx
+		je exit
+		movl NUM_ARRAY(,%ecx,4), %ebx
+		jmp collect_prime_numbers		
 
 	exit:
 		movl $EXIT, %eax
