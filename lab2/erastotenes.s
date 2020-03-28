@@ -10,7 +10,7 @@ ACCESS = 0666
 CR_WRONLY_TR = 03101
 RDONLY = 0
 
-MAX_VAL = 121
+MAX_VAL = 100
 BUFF_SIZE = 1000
 
 .bss
@@ -20,7 +20,7 @@ BUFF_SIZE = 1000
 .text
 .globl _start
 _start:
-	movl $2, %ecx				# 0 i 1 nie sa liczbami pierwszymi
+	movl $0, %ecx
 	
 	# wypelnienie tablicy liczbami
 	fill_array:
@@ -41,12 +41,13 @@ _start:
 		jne should_cross_out		# jesli nie wukluczona - sprawdzam ja
 		cmpl $MAX_VAL, %ecx		# sprawdzam czy sprawdzono cala tablice
 		jl array_iteration		# jesli nie - przechodze do kolejnej iteracji
+		movl $1, %ecx			# ustawienie licznika dla collect_prime_numbers
 		jmp collect_prime_numbers	# jesli tak - przechodze do zbierania liczb
 
 	should_cross_out:
 		inc %edi			# nie musze sprawdzac liczby samej z soba, inkrementuje licznik
-		cmpl $MAX_VAL + 1, %edi
-		je array_iteration
+		cmpl $MAX_VAL + 1, %edi		# jesli cyfra poza skala -
+		je array_iteration		# koncze iterowac po wewnetrznej petli
 		cmpl $-1, NUM_ARRAY(,%edi,4)	# sprawdzam czy liczba juz wykluczona
 		je should_cross_out		# jesli tak - przechodze do kolejnej
 		movl NUM_ARRAY(,%edi,4), %eax	# przechowanie wartosci wewnetrznej petli w eax
@@ -63,22 +64,20 @@ _start:
 
 	cross_out:
 		movl $-1, NUM_ARRAY(,%edi,4)	# wykreslenie liczby
-		cmpl $MAX_VAL, %edi
-		je array_iteration
+		cmpl $MAX_VAL, %edi		# sprawdzenie czy ostatnia liczba
+		je array_iteration		# jesli ostatnia - wszystkie liczby w petli wewn. sprawdzone
 		jmp should_cross_out		# kolejna iteracja petli wewnetrznej
 
-	movl $1, %ecx
+	
 
 	collect_prime_numbers:
-		inc %ecx
-		cmpl $MAX_VAL + 1, %ecx
-		je exit
-		cmpl $-1, NUM_ARRAY(,%ecx,4)
-		je collect_prime_numbers
-		cmpl $MAX_VAL, %ecx
-		je exit
-		movl NUM_ARRAY(,%ecx,4), %ebx
-		jmp collect_prime_numbers		
+		inc %ecx			# inkrementacja licznika
+		cmpl $MAX_VAL + 1, %ecx		# jesli cyfra poza skala -
+		je exit				# mozna skonczyc iterowac
+		cmpl $-1, NUM_ARRAY(,%ecx,4)	# sprawdzenie czy wartosc wykluczona, jesli tak -
+		je collect_prime_numbers	# mozna przejsc do kolejnej wartosci
+		push NUM_ARRAY(,%ecx,4)		# wrzucenie wartosci na stos
+		jmp collect_prime_numbers	# sprawdzenie kolejnej cyfry		
 
 	exit:
 		movl $EXIT, %eax
