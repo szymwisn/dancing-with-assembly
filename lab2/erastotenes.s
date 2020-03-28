@@ -50,7 +50,9 @@ _start:
 		cmpl $-1, NUM_ARRAY(,%edi,4)	# sprawdzam czy liczba juz wykluczona
 		je should_cross_out		# jesli tak - przechodze do kolejnej
 		movl NUM_ARRAY(,%edi,4), %eax	# przechowanie wartosci wewnetrznej petli w eax
-		divl NUM_ARRAY(,%ecx,4)		# podziel wartosc z petli wewnetrznej przez wartosc w petli zewnetrznej
+		movl NUM_ARRAY(,%ecx,4), %ebx	# przechowanie wartosci zewnetrznej petli w ebx
+		movl $0, %edx			# wyzerowanie reszty
+		divl %ebx			# podziel wartosc z petli wewnetrznej przez wartosc w petli zewnetrznej
 		cmpl $0, %edx			# jesli reszta wynosi 0 to znaczy ze liczba z petli wewnetrznej jest
 						# wielokrotnoscia liczby z petli zewnetrznej - wykreslam ja
 		je cross_out			# jesli liczba w petli wewnetrznej jest wielokrotnoscia liczby z petli
