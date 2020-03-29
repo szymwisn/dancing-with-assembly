@@ -98,7 +98,18 @@ _start:
 
 		popq %rbx			# w ebx k!
 		popq %rcx			# w ecx n!
-	
+
+		imull %ebx			# w eax k!(n - k)!
+		
+		movl %eax, %ebx			# zamiana rejestrow tak
+		movl %ecx, %eax			# aby przy dzieleniu
+		movl %ebx, %ecx			# wszystko sie zgadzalo
+
+		idivl %ecx			# wynik w eax
+
+		movl %eax, %ebx			# wpisanie wyniku do ebx
+						# celem wyswietlenia w echo
+
 		movq %rbp, %rsp
 		popq %rbp
 		ret
