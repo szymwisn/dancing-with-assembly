@@ -16,6 +16,7 @@ factorial:
 	pushl %edx			# n - 1 jako argument w rekurencyjnym wywolaniu funkcji
 	call factorial			# rekurencyjne wywolanie funkcji
 	pop %edx			# przywrocenie n-1
+	addl $1, %edx
 
 	imull %edx, %eax		# (n-1) * n 
 
