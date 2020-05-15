@@ -1,6 +1,7 @@
 .data
     control_word: .float 0
-    format: .asciz "\nCW: %f\n"
+    format: .asciz "CW: %f\n"
+    invalidOperation: .asciz "Exception: Invalid Operation\n"
 
 .text
 
@@ -21,21 +22,16 @@ checkBit:
   pushl %ebp
   movl %esp, %ebp
 
-  fstcw control_word
-  movl control_word, %eax
-  
-  #pushl %eax
-  #pushl $format
-  #call printf
-  #addl $4, %esp
+  fstcw control_word 
+  # TODO: Pobrac tego control worda ;<
+  movl $32, %eax
 
   test 8(%ebp), %eax
   jnz exception_found
-
   movl $0, %eax
   jmp end
 
-  exception_found: 
+  exception_found:
     movl $1, %eax
 
   end:
@@ -49,10 +45,8 @@ setSinglePrecision:
   pushl %ebp
   movl %esp, %ebp
 
-  fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
-  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+  fstcw control_word                     # pobierz obecne CW do control_word
+  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
   orl  $0x0000, %ecx # single
@@ -72,9 +66,7 @@ setDoublePrecision:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
-  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
   orl  $0x0200, %ecx                    # double
@@ -93,9 +85,7 @@ setExtendedPrecision:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
-  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
   orl  $0x0300, %ecx                    # double extended
@@ -114,8 +104,8 @@ setRoundToNearest:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
+  movl $control_word, %ecx  
+
   andl $0xF3FF, %ecx
   orl  $0x0000, %ecx                    # nearest
 
@@ -134,8 +124,8 @@ setRoundDown:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
+  movl $control_word, %ecx  
+
   andl $0xF3FF, %ecx
   orl  $0x0400, %ecx                    # down
 
@@ -154,8 +144,8 @@ setRoundUp:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
+  movl $control_word, %ecx  
+
   andl $0xF3FF, %ecx
   orl  $0x0800, %ecx                    # up
 
@@ -174,8 +164,8 @@ setTruncate:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
+  movl $control_word, %ecx  
+
   andl $0xF3FF, %ecx
   orl  $0x0C00, %ecx                    # truncate
 

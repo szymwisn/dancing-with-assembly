@@ -18,6 +18,8 @@ float multiply(float a, float b);
 float divide(float a, float b);
 float squareRoot(float a);
 
+//void checkExceptions();
+
 void checkExceptions() {
   char *exceptions[] = {
     "Invalid Operation\n",
@@ -37,11 +39,11 @@ void checkExceptions() {
     32
   };
 
-  for(int i = 0; i < 5; i++) {
+  for(int i = 0; i < 6; i++) {
     int occurred = checkBit(bits[i]);
     
     if(occurred == 1) {
-      //printf("Exception occurred: %s", exceptions[i]); 
+      printf("Exception occurred: %s", exceptions[i]); 
     }
   }
 }
