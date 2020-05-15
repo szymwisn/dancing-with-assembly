@@ -1,144 +1,258 @@
+.data
+    control_word: .float 0
+    format: .asciz "\nCW: %f\n"
+
 .text
 
-.data
-    plus: .float 0.01
-    minus: .float -0.01
+.globl initializeFPU
+initializeFPU:
+  pushl %ebp
+  movl %esp, %ebp
 
-    num_a: .float 1.01
-    num_b: .float -5.12
-
-    control_word: .float 0
-
-.globl _start
-_start:
+  finit
   
-  # ----
-  # inicjalizacja FPU, przywraca FPU do domyślnego stanu, niejawnie wywołuje FWAIT - synchronizacja z CPU
-  #
-  FINIT
+  movl %ebp, %esp
+  popl %ebp
+  ret
 
-  # ======================
-  cw_settings:     
-    # ----
-    # zaladownie rejetru CW do rejestru ecx
-    #
-    FSTCW control_word
-    MOV control_word, %ecx
-    
-    # ----
-    # ustawienie bitów PC - Precision Control - REAL4/REAL8/REAL10
-    # za PC odpowiadaja bity 8 i 9 - tylko na nich operuje, reszte
-    # pozostawiam bez zmian
-    # 00 - REAL4 - float
-    # 10 - REAL8 - double
-    # 11 - REAL10 - extended 
-    #
-    AND $0b1111110011111111, %ecx
-    OR  $0b0000000000000000, %ecx # float
-    # OR  $0x0000001000000000b, %ecx # double
-    # OR  $0x0000001100000000b, %ecx # extended
 
-    # ----
-    # ustawienie bitów RC - Round Control - REAL4/REAL8/REAL10
-    # za RC odpowiadaja bity 10 i 11 - tylko na nich operuje, reszte
-    # pozostawiam bez zmian
-    # 00 - round to nearest
-    # 01 - round down (-> -inf)
-    # 10 - round up (-> +inf)
-    # 11 - truncate (-> 0)
-    #
-    AND $0b1111001111111111, %ecx
-    OR  $0b0000000000000000, %ecx # nearest
-    # OR  $0b0000010000000000, %ecx # down
-    # OR  $0b0000100000000000, %ecx # up
-    # OR  $0b0000110000000000, %ecx # truncate
+.globl checkBit
+checkBit:
+  pushl %ebp
+  movl %esp, %ebp
 
-    # ----
-    # zaladowanie ustawionego rejestru control word
-    #
-    MOV %ecx, control_word
-    FLDCW control_word
+  fstcw control_word
+  movl control_word, %eax
+  
+  #pushl %eax
+  #pushl $format
+  #call printf
+  #addl $4, %esp
 
-    # ======================
-    calculator:
-      
-      # ----
-      # num_a + num_b
-      #
-      addition:
-        FLD num_b
-        FLD num_a
-        FADDP
-      
-      # ----
-      # num_a - num_b
-      #
-      substraction:
-        FLD num_b
-        FLD num_a
-        FSUBP
-      
-      # ----
-      # num_a * num_b
-      #
-      multipliction:
-        FLD num_b
-        FLD num_a
-        FMULP
+  test 8(%ebp), %eax
+  jnz exception_found
 
-      # ----
-      # num_a / num_b
-      #
-      division:
-        FLD num_b
-        FLD num_a
-        FDIVP
+  movl $0, %eax
+  jmp end
 
-      JMP end
+  exception_found: 
+    movl $1, %eax
 
-    # ======================
-    exceptions:
-      
-      # ----
-      # dzielenie zera przez dodatnia liczbe
-      #
-      plus_zero:
-        FLD plus
-        FLDZ
-        FDIVP
+  end:
+    movl %ebp, %esp
+    popl %ebp
+    ret
 
-      # ----
-      # dzielenie zera przez ujemna liczbe
-      #
-      minus_zero:
-        FLD minus
-        FLDZ
-        FDIVP
-
-      # ----
-      # dzielenie dodatniej liczby przez 0
-      #    
-        plus_inf:
-        FLDZ
-        FLD plus
-        FDIVP
-
-      # ----
-      # dzielenie ujemnej liczby przez 0
-      #
-      minus_inf:
-        FLDZ
-        FLD minus
-        FDIVP
  
-      # ----
-      # pierwiastek drugiego stopnia z ujemnej liczby
-      #
-      NaN:
-        FLD minus
-        FSQRT
+.globl setSinglePrecision
+setSinglePrecision:
+  pushl %ebp
+  movl %esp, %ebp
 
-  end: 
-    MOV $1, %eax
-    MOV $0, %ebx
-    INT $0x80
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+    
+  andl $0xFCFF, %ecx      
+  orl  $0x0000, %ecx # single
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl setDoublePrecision
+setDoublePrecision:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+    
+  andl $0xFCFF, %ecx      
+  orl  $0x0200, %ecx                    # double
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  movl %ebp, %esp
+  popl %ebp
+
+
+.globl setExtendedPrecision
+setExtendedPrecision:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+    
+  andl $0xFCFF, %ecx      
+  orl  $0x0300, %ecx                    # double extended
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  movl %ebp, %esp
+  popl %ebp
+
+
+.globl setRoundToNearest
+setRoundToNearest:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  andl $0xF3FF, %ecx
+  orl  $0x0000, %ecx                    # nearest
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+ 
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl setRoundDown
+setRoundDown:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  andl $0xF3FF, %ecx
+  orl  $0x0400, %ecx                    # down
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+ 
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl setRoundUp
+setRoundUp:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  andl $0xF3FF, %ecx
+  orl  $0x0800, %ecx                    # up
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+ 
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl setTruncate
+setTruncate:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word                    # pobierz obecne CW do control_word
+  fwait                                 # zapewnia, ze powyzsza instrukcja
+                                        # w pelni sie wykona
+  andl $0xF3FF, %ecx
+  orl  $0x0C00, %ecx                    # truncate
+
+  movl %ecx, control_word               # zaladowanie zawartosci ecx do
+                                        # control_word
+  fldcw control_word                    # zaladowanie zmodyfikowanego CW
+ 
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl add
+add:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fld 12(%ebp)
+  fld 8(%ebp)
+  faddp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl substract
+substract:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fld 12(%ebp)
+  fld 8(%ebp)
+  fsubp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl multiply
+multiply:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fld 12(%ebp)
+  fld 8(%ebp)
+  fmulp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl divide
+divide:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fld 12(%ebp)
+  fld 8(%ebp)
+  fdivp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.globl squareRoot
+squareRoot:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fld 8(%ebp)
+  fsqrt
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
