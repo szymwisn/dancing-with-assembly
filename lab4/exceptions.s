@@ -1,11 +1,17 @@
 .data
-    control_word: .float 0
-    format: .asciz "CW: %f\n"
-    invalidOperation: .asciz "Exception: Invalid Operation\n"
+    control_word: .int 0
+    format: .asciz "\nCW: %d\n"
+    invalidOperation: .asciz "\nException: Invalid operation"
+    denormalizedOperand: .asciz "\nException: Denormalized operand"
+    zeroDivide: .asciz "\nException: Division by zero"
+    overflow: .asciz "\nException: Overflow"
+    underflow: .asciz "\nException: Underflow"
+    Precision: .asciz "\nException: Precision lost"
 
 .text
 
 .globl initializeFPU
+.type initializeFpu, @function
 initializeFPU:
   pushl %ebp
   movl %esp, %ebp
@@ -16,31 +22,9 @@ initializeFPU:
   popl %ebp
   ret
 
-
-.globl checkBit
-checkBit:
-  pushl %ebp
-  movl %esp, %ebp
-
-  fstcw control_word 
-  # TODO: Pobrac tego control worda ;<
-  movl $32, %eax
-
-  test 8(%ebp), %eax
-  jnz exception_found
-  movl $0, %eax
-  jmp end
-
-  exception_found:
-    movl $1, %eax
-
-  end:
-    movl %ebp, %esp
-    popl %ebp
-    ret
-
  
 .globl setSinglePrecision
+.type setSinglePrecision, @function
 setSinglePrecision:
   pushl %ebp
   movl %esp, %ebp
@@ -61,6 +45,7 @@ setSinglePrecision:
 
 
 .globl setDoublePrecision
+.type setDoublePrecision, @function
 setDoublePrecision:
   pushl %ebp
   movl %esp, %ebp
@@ -80,6 +65,7 @@ setDoublePrecision:
 
 
 .globl setExtendedPrecision
+.type setExtendedPrecision, @function
 setExtendedPrecision:
   pushl %ebp
   movl %esp, %ebp
@@ -99,6 +85,7 @@ setExtendedPrecision:
 
 
 .globl setRoundToNearest
+.type setRoundToNearest, @function
 setRoundToNearest:
   pushl %ebp
   movl %esp, %ebp
@@ -119,6 +106,7 @@ setRoundToNearest:
 
 
 .globl setRoundDown
+.type setRoundDown, @function
 setRoundDown:
   pushl %ebp
   movl %esp, %ebp
@@ -139,6 +127,7 @@ setRoundDown:
 
 
 .globl setRoundUp
+.type setRoundUp, @function
 setRoundUp:
   pushl %ebp
   movl %esp, %ebp
@@ -159,6 +148,7 @@ setRoundUp:
 
 
 .globl setTruncate
+.type setTruncate, @function
 setTruncate:
   pushl %ebp
   movl %esp, %ebp
@@ -179,6 +169,7 @@ setTruncate:
 
 
 .globl add
+.type add, @function
 add:
   pushl %ebp
   movl %esp, %ebp
@@ -187,12 +178,15 @@ add:
   fld 8(%ebp)
   faddp
 
+  call checkForExceptions
+
   movl %ebp, %esp
   popl %ebp
   ret
 
 
 .globl substract
+.type substract, @function
 substract:
   pushl %ebp
   movl %esp, %ebp
@@ -201,12 +195,15 @@ substract:
   fld 8(%ebp)
   fsubp
 
+  call checkForExceptions
+
   movl %ebp, %esp
   popl %ebp
   ret
 
 
 .globl multiply
+.type multiply, @function
 multiply:
   pushl %ebp
   movl %esp, %ebp
@@ -215,12 +212,15 @@ multiply:
   fld 8(%ebp)
   fmulp
 
+  call checkForExceptions
+
   movl %ebp, %esp
   popl %ebp
   ret
 
 
 .globl divide
+.type divide, @function
 divide:
   pushl %ebp
   movl %esp, %ebp
@@ -229,12 +229,15 @@ divide:
   fld 8(%ebp)
   fdivp
 
+  call checkForExceptions
+
   movl %ebp, %esp
   popl %ebp
   ret
 
 
 .globl squareRoot
+.type squareRoot, @function
 squareRoot:
   pushl %ebp
   movl %esp, %ebp
@@ -242,7 +245,70 @@ squareRoot:
   fld 8(%ebp)
   fsqrt
 
+  call checkForExceptions
+
   movl %ebp, %esp
   popl %ebp
   ret
+
+
+.type checkForExceptions, @function
+checkForExceptions:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word 
+  movl control_word, %eax
+
+  pushl %eax
+  pushl $format
+  call printf
+  addl $8, %esp
+
+  invalid_operation: 
+    test $1, %eax
+    jz denormalized_operand
+    pushl $invalidOperation
+    call printf
+    addl $4, %esp
+    
+  denormalized_operand:
+    test $2, %eax
+    jz zero_divide
+    pushl $denormalizedOperand
+    call printf
+    addl $4, %esp
+
+  zero_divide:
+    test $3, %eax
+    jz overflow_
+    pushl $zero_divide
+    call printf
+    addl $4, %esp
+
+  overflow_:
+    test $4, %eax
+    jz underflow_
+    pushl $overflow
+    call printf  
+    addl $4, %esp  
+
+  underflow_:
+    test $5, %eax
+    jz precision
+    pushl $underflow
+    call printf
+    addl $4, %esp
+
+  precision:
+    test $6, %eax
+    jz end
+    pushl $precision
+    call printf
+    addl $4, %esp
+
+  end:
+    movl %ebp, %esp
+    popl %ebp
+    ret
 

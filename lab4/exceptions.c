@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 void initializeFPU();
-int checkBit(int bit);
 
 void setSinglePrecision();
 void setDoublePrecision();
@@ -18,42 +17,12 @@ float multiply(float a, float b);
 float divide(float a, float b);
 float squareRoot(float a);
 
-//void checkExceptions();
-
-void checkExceptions() {
-  char *exceptions[] = {
-    "Invalid Operation\n",
-    "Denormalized Operand\n",
-    "Zero Divide\n",
-    "Overflow\n",
-    "Underflow\n",
-    "Precision\n"
-  };
-
-  int bits[] = {
-    1,
-    2,
-    4,
-    8,
-    16,
-    32
-  };
-
-  for(int i = 0; i < 6; i++) {
-    int occurred = checkBit(bits[i]);
-    
-    if(occurred == 1) {
-      printf("Exception occurred: %s", exceptions[i]); 
-    }
-  }
-}
-
 int main() {
   float a, b, result;
 
   initializeFPU();
   setDoublePrecision();
-  setRoundToNearest();
+  setTruncate();
 
   printf("a = ");
   scanf("%f", &a);
@@ -61,29 +30,29 @@ int main() {
   printf("b = ");
   scanf("%f", &b);
 
+  printf("\n=== Addition ===");
   result = add(a, b);
   printf("\n%f + %f = %f\n", a, b, result);
-  checkExceptions();
 
+  printf("\n=== Substraction ===");
   result = substract(a, b);
   printf("\n%f - %f = %f\n", a, b, result);
-  checkExceptions();
 
+  printf("\n=== Multiplication ===");
   result = multiply(a, b);
   printf("\n%f * %f = %f\n", a, b, result);
-  checkExceptions();
 
+  printf("\n=== Division  ===");
   result = divide(a, b);
   printf("\n%f / %f = %f\n", a, b, result);
-  checkExceptions();
 
+  printf("\n=== Square root a ===");
   result = squareRoot(a);
   printf("\nsqrt(%f) = %f\n", a, result);
-  checkExceptions();
 
+  printf("\n=== Square root b ===");
   result = squareRoot(b);
   printf("\nsqrt(%f) = %f\n", b, result);
-  checkExceptions();
 
   return 0;
 }
