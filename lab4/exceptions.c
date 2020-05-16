@@ -21,7 +21,7 @@ int main() {
   float a, b, result;
 
   initializeFPU();
-  setExtendedPrecision();
+  setDoublePrecision();
   setTruncate();
 
   printf("\na = ");
@@ -56,3 +56,4 @@ int main() {
 
   return 0;
 }
+

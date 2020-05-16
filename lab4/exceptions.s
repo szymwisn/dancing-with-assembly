@@ -2,7 +2,7 @@
     control_word: .int 0
     status_word: .int 0
     
-    cw_format: .asciz "New Control Word: %d (dec)\n"
+    cw_format: .asciz "Control Word: %d (dec)\n"
     sw_format: .asciz "\nStatus Word: %d (dec)"
     invalid: .asciz "\nException: Invalid operation"
     denormalized: .asciz "\nException: Denormalized operand"
@@ -20,6 +20,8 @@ initializeFPU:
   movl %esp, %ebp
 
   finit
+  
+  call printCW
   
   movl %ebp, %esp
   popl %ebp
@@ -100,7 +102,7 @@ setRoundToNearest:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx  
+  movl control_word, %ecx  
 
   andl $0xF3FF, %ecx
   orl  $0x0000, %ecx                    # nearest
@@ -123,7 +125,7 @@ setRoundDown:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx  
+  movl control_word, %ecx  
 
   andl $0xF3FF, %ecx
   orl  $0x0400, %ecx                    # down
@@ -134,7 +136,7 @@ setRoundDown:
  
   call printCW
  
-   movl %ebp, %esp
+  movl %ebp, %esp
   popl %ebp
   ret
 
@@ -146,7 +148,7 @@ setRoundUp:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx  
+  movl control_word, %ecx  
 
   andl $0xF3FF, %ecx
   orl  $0x0800, %ecx                    # up
@@ -169,21 +171,19 @@ setTruncate:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx  
-
-  andl $0xF3FF, %ecx
-  orl  $0x0C00, %ecx                    # truncate
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
+    
+  andl $0xF3FF, %ecx      
+  orl  $0x0C00, %ecx                    # double
 
   movl %ecx, control_word               # zaladowanie zawartosci ecx do
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
 
   call printCW
- 
+
   movl %ebp, %esp
   popl %ebp
-  ret
-
 
 .globl add
 .type add, @function
