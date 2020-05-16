@@ -2,16 +2,17 @@
     control_word: .int 0
     status_word: .int 0
     
-    cw_format: .asciz "Control Word: %d (dec)\n"
-    sw_format: .asciz "\nStatus Word: %d (dec)"
-    invalid: .asciz "\nException: Invalid operation"
-    denormalized: .asciz "\nException: Denormalized operand"
-    zero: .asciz "\nException: Division by zero"
-    overflow: .asciz "\nException: Overflow"
-    underflow: .asciz "\nException: Underflow"
-    precision: .asciz "\nException: Precision lost"
+    cw_format: .asciz "> Control Word: %d (dec)\n"
+    sw_format: .asciz "\n> Status Word: %d (dec)"
+    invalid: .asciz "\n!!! Exception: Invalid operation"
+    denormalized: .asciz "\n!!! Exception: Denormalized operand"
+    zero: .asciz "\n!!! Exception: Division by zero"
+    overflow: .asciz "\n!!! Exception: Overflow"
+    underflow: .asciz "\n!!! Exception: Underflow"
+    precision: .asciz "\n!!! Exception: Precision lost"
 
 .text
+
 
 .globl initializeFPU
 .type initializeFpu, @function
@@ -73,6 +74,7 @@ setDoublePrecision:
   popl %ebp
   ret
 
+
 .globl setExtendedPrecision
 .type setExtendedPrecision, @function
 setExtendedPrecision:
@@ -94,6 +96,7 @@ setExtendedPrecision:
   movl %ebp, %esp
   popl %ebp
   ret
+
 
 .globl setRoundToNearest
 .type setRoundToNearest, @function
@@ -184,6 +187,8 @@ setTruncate:
 
   movl %ebp, %esp
   popl %ebp
+  ret
+
 
 .globl add
 .type add, @function
@@ -284,61 +289,60 @@ checkForExceptions:
   pushl %ebp
   movl %esp, %ebp
 
-  fstsw status_word
-  movl status_word, %ecx
-
   call printSW
+  
+  fstsw status_word
 
   invalid_operation_ex: 
-    movl %ecx, %eax
+    movl status_word, %eax
     andl $1, %eax
     cmpl $1, %eax
-    jz denormalized_ex
+    jne denormalized_ex
     pushl $invalid
     call printf
     addl $4, %esp
  
   denormalized_ex:
-    movl %ecx, %eax
+    movl status_word, %eax
     andl $2, %eax
     cmpl $2, %eax
-    jz zero_ex
+    jne zero_ex
     pushl $denormalized
     call printf
     addl $4, %esp
 
   zero_ex:
-    movl %ecx, %eax
-    andl $3, %eax
-    cmpl $3, %eax
-    jz overflow_ex
+    movl status_word, %eax
+    andl $4, %eax
+    cmpl $4, %eax
+    jne overflow_ex
     pushl $zero
     call printf
     addl $4, %esp
 
   overflow_ex:
-    movl %ecx, %eax
-    andl $4, %eax
-    cmpl $4, %eax
-    jz underflow_ex
+    movl status_word, %eax
+    andl $8, %eax
+    cmpl $8, %eax
+    jne underflow_ex
     pushl $overflow
     call printf  
     addl $4, %esp  
 
   underflow_ex:
-    movl %ecx, %eax
-    andl $5, %eax
-    cmpl $5, %eax
-    jz precision_ex
+    movl status_word, %eax
+    andl $16, %eax
+    cmpl $16, %eax
+    jne precision_ex
     pushl $underflow
     call printf
     addl $4, %esp
 
   precision_ex:
-    movl %ecx, %eax
-    andl $6, %eax
-    cmpl $6, %eax
-    jnz end
+    movl status_word, %eax
+    andl $32, %eax
+    cmpl $32, %eax
+    jne end
     pushl $precision
     call printf
     addl $4, %esp
