@@ -21,10 +21,10 @@ int main() {
   float a, b, result;
 
   initializeFPU();
-  setDoublePrecision();
+  setExtendedPrecision();
   setTruncate();
 
-  printf("a = ");
+  printf("\na = ");
   scanf("%f", &a);
 
   printf("b = ");

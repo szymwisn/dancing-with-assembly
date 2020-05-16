@@ -1,12 +1,15 @@
 .data
     control_word: .int 0
-    format: .asciz "\nCW: %d\n"
-    invalidOperation: .asciz "\nException: Invalid operation"
-    denormalizedOperand: .asciz "\nException: Denormalized operand"
-    zeroDivide: .asciz "\nException: Division by zero"
+    status_word: .int 0
+    
+    cw_format: .asciz "New Control Word: %d (dec)\n"
+    sw_format: .asciz "\nStatus Word: %d (dec)"
+    invalid: .asciz "\nException: Invalid operation"
+    denormalized: .asciz "\nException: Denormalized operand"
+    zero: .asciz "\nException: Division by zero"
     overflow: .asciz "\nException: Overflow"
     underflow: .asciz "\nException: Underflow"
-    Precision: .asciz "\nException: Precision lost"
+    precision: .asciz "\nException: Precision lost"
 
 .text
 
@@ -29,15 +32,17 @@ setSinglePrecision:
   pushl %ebp
   movl %esp, %ebp
 
-  fstcw control_word                     # pobierz obecne CW do control_word
-  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
+  fstcw control_word                    # pobierz obecne CW do control_word
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
-  orl  $0x0000, %ecx # single
+  orl  $0x0000, %ecx                    # single
 
   movl %ecx, control_word               # zaladowanie zawartosci ecx do
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  call printCW
 
   movl %ebp, %esp
   popl %ebp
@@ -51,7 +56,7 @@ setDoublePrecision:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
   orl  $0x0200, %ecx                    # double
@@ -60,9 +65,11 @@ setDoublePrecision:
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
 
+  call printCW
+
   movl %ebp, %esp
   popl %ebp
-
+  ret
 
 .globl setExtendedPrecision
 .type setExtendedPrecision, @function
@@ -71,7 +78,7 @@ setExtendedPrecision:
   movl %esp, %ebp
 
   fstcw control_word                    # pobierz obecne CW do control_word
-  movl $control_word, %ecx               # zapisanie CW do rejestru ecx
+  movl control_word, %ecx               # zapisanie CW do rejestru ecx
     
   andl $0xFCFF, %ecx      
   orl  $0x0300, %ecx                    # double extended
@@ -80,9 +87,11 @@ setExtendedPrecision:
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
 
+  call printCW
+
   movl %ebp, %esp
   popl %ebp
-
+  ret
 
 .globl setRoundToNearest
 .type setRoundToNearest, @function
@@ -100,6 +109,8 @@ setRoundToNearest:
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
  
+  call printCW
+  
   movl %ebp, %esp
   popl %ebp
   ret
@@ -121,7 +132,9 @@ setRoundDown:
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
  
-  movl %ebp, %esp
+  call printCW
+ 
+   movl %ebp, %esp
   popl %ebp
   ret
 
@@ -141,6 +154,8 @@ setRoundUp:
   movl %ecx, control_word               # zaladowanie zawartosci ecx do
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  call printCW
  
   movl %ebp, %esp
   popl %ebp
@@ -162,6 +177,8 @@ setTruncate:
   movl %ecx, control_word               # zaladowanie zawartosci ecx do
                                         # control_word
   fldcw control_word                    # zaladowanie zmodyfikowanego CW
+
+  call printCW
  
   movl %ebp, %esp
   popl %ebp
@@ -173,6 +190,8 @@ setTruncate:
 add:
   pushl %ebp
   movl %esp, %ebp
+
+  fclex
 
   fld 12(%ebp)
   fld 8(%ebp)
@@ -191,6 +210,8 @@ substract:
   pushl %ebp
   movl %esp, %ebp
 
+  fclex
+
   fld 12(%ebp)
   fld 8(%ebp)
   fsubp
@@ -207,6 +228,8 @@ substract:
 multiply:
   pushl %ebp
   movl %esp, %ebp
+
+  fclex
 
   fld 12(%ebp)
   fld 8(%ebp)
@@ -225,6 +248,8 @@ divide:
   pushl %ebp
   movl %esp, %ebp
 
+  fclex
+
   fld 12(%ebp)
   fld 8(%ebp)
   fdivp
@@ -242,6 +267,8 @@ squareRoot:
   pushl %ebp
   movl %esp, %ebp
 
+  fclex
+
   fld 8(%ebp)
   fsqrt
 
@@ -257,52 +284,61 @@ checkForExceptions:
   pushl %ebp
   movl %esp, %ebp
 
-  fstcw control_word 
-  movl control_word, %eax
+  fstsw status_word
+  movl status_word, %ecx
 
-  pushl %eax
-  pushl $format
-  call printf
-  addl $8, %esp
+  call printSW
 
-  invalid_operation: 
-    test $1, %eax
-    jz denormalized_operand
-    pushl $invalidOperation
+  invalid_operation_ex: 
+    movl %ecx, %eax
+    andl $1, %eax
+    cmpl $1, %eax
+    jz denormalized_ex
+    pushl $invalid
     call printf
     addl $4, %esp
-    
-  denormalized_operand:
-    test $2, %eax
-    jz zero_divide
-    pushl $denormalizedOperand
-    call printf
-    addl $4, %esp
-
-  zero_divide:
-    test $3, %eax
-    jz overflow_
-    pushl $zero_divide
+ 
+  denormalized_ex:
+    movl %ecx, %eax
+    andl $2, %eax
+    cmpl $2, %eax
+    jz zero_ex
+    pushl $denormalized
     call printf
     addl $4, %esp
 
-  overflow_:
-    test $4, %eax
-    jz underflow_
+  zero_ex:
+    movl %ecx, %eax
+    andl $3, %eax
+    cmpl $3, %eax
+    jz overflow_ex
+    pushl $zero
+    call printf
+    addl $4, %esp
+
+  overflow_ex:
+    movl %ecx, %eax
+    andl $4, %eax
+    cmpl $4, %eax
+    jz underflow_ex
     pushl $overflow
     call printf  
     addl $4, %esp  
 
-  underflow_:
-    test $5, %eax
-    jz precision
+  underflow_ex:
+    movl %ecx, %eax
+    andl $5, %eax
+    cmpl $5, %eax
+    jz precision_ex
     pushl $underflow
     call printf
     addl $4, %esp
 
-  precision:
-    test $6, %eax
-    jz end
+  precision_ex:
+    movl %ecx, %eax
+    andl $6, %eax
+    cmpl $6, %eax
+    jnz end
     pushl $precision
     call printf
     addl $4, %esp
@@ -312,3 +348,38 @@ checkForExceptions:
     popl %ebp
     ret
 
+
+.type printSW, @function
+printSW:
+  pushl %ebp
+  movl %esp, %ebp
+  
+  fstsw status_word
+  movl status_word, %eax
+
+  pushl %eax
+  pushl $sw_format
+  call printf
+  addl $8, %esp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret
+
+
+.type printCW, @function
+printCW:
+  pushl %ebp
+  movl %esp, %ebp
+
+  fstcw control_word
+  movl control_word, %eax
+  
+  pushl %eax
+  pushl $cw_format
+  call printf
+  addl $8, %esp
+
+  movl %ebp, %esp
+  popl %ebp
+  ret

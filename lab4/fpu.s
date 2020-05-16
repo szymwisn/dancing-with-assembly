@@ -15,7 +15,10 @@ SYSCALL32 = 0x80
     very_small_double: .double 2.2250738585072e-308
     very_big_double: .double 1.79769313486231e308
 
-    control_word: .float 0
+    control_word: .int 0
+    status_word: .int 0
+
+    format: .asciz "\n%d\n"
 
 .text
 
@@ -26,13 +29,12 @@ _start:
   # inicjalizacja FPU, przywraca FPU do domyślnego stanu, niejawnie wywołuje FWAIT - synchronizacja z CPU
   #
   finit
- 
+  fclex 
+
   # ----
   # zaladownie rejetru CW do rejestru ecx
   #
   fstcw control_word                    # pobierz obecne CW do control_word
-  fwait                                 # zapewnia, ze powyzsza instrukcja
-                                        # w pelni sie wykona
   movl control_word, %ecx               # zapisanie CW do rejestru ecx
     
   # ----
@@ -44,8 +46,8 @@ _start:
   # 11 - REAL10 - extended double 
   #
   andl $0xFCFF, %ecx      
-  orl  $0x0000, %ecx # single
-  #orl  $0x0200, %ecx # double
+  #orl  $0x0000, %ecx # single
+  orl  $0x0200, %ecx # double
   #orl  $0x0300, %ecx # double extended
 
   # ----
@@ -71,13 +73,14 @@ _start:
   fldcw control_word                  # zaladowanie zmodyfikowanego CW
  
 
-  jmp overflow
+  jmp zero_divide
 
   # ----
   # Invalid operation (#I)
   # pierwiastek z liczby ujemnej
   #
   invalid_operation:
+    fclex                         # czysci wyjatki
     fld minus_five
     fsqrt    
     jmp end
@@ -93,7 +96,8 @@ _start:
   # dzielenie przez 0
   #
   zero_divide:
-    fld zero
+    fclex
+    fldz
     fld one
     fdivp
     jmp end
@@ -102,6 +106,7 @@ _start:
   # Numeric overflow (#O)
   #
   overflow:
+    fclex                         # czysci wyjatki
     fld very_big_float
     fld medium_float
     fmulp
@@ -111,6 +116,7 @@ _start:
   # Numeric underflow (#U)
   #
   underflow:
+    fclex                         # czysci wyjatki
     fld very_big_float
     fld very_small_float
     fdivp
@@ -120,6 +126,7 @@ _start:
   # Inexact result (precision) (#P)
   # utrata precyzji, np. poprzez podzielenie 1 przez 10
   precision:
+    fclex                         # czysci wyjatki
     fld ten
     fld one
     fdivp
@@ -129,73 +136,3 @@ _start:
     movl $EXIT, %eax
     int $SYSCALL32
 
-#  .type addition, @function
-#  addition:
-#    pushl %ebp
-#    movl %esp, %ebp
-#    subl $4, %esp
-#
-#    fld 12(%ebp)
-#    fld 8(%ebp)
-#    faddp
-#      
-#    movl %ebp, %esp
-#    popl %ebp
-#    ret
-#      
-#  .type substraction, @function
-#  substraction:
-#    pushl %ebp
-#    movl %esp, %ebp
-#    subl $4, %esp
-#      
-#    fld 12(%ebp)
-#    fld 8(%ebp)
-#    fsubp
-#      
-#    movl %ebp, %esp
-#    popl %ebp
-#    ret
-#
-#  .type multiplication, @function
-#  multipliction:
-#    pushl %ebp
-#    movl %esp, %ebp
-#    subl $4, %esp
-#      
-#    fld 12(%ebp)
-#    fld 8(%ebp)
-#    fmulp
-#
-#    movl %ebp, %esp
-#    popl %ebp
-#    ret
-#
-#  .type division, @function
-#  division:
-#    pushl %ebp
-#    movl %esp, %ebp
-#    subl $4, %esp
-#      
-#    fld 12(%ebp)
-#    fld 8(%ebp)
-#    fdivp
-#
-#    movl %ebp, %esp
-#    popl %ebp
-#    ret
-#
-#  
-#  .type squareRoot, @function
-#  squareRoot:
-#    pushl %ebp
-#    movl %esp, %ebp
-#    subl $4, %esp
-#      
-#    fld 8(%ebp)
-#    fsqrt
-#
-#    movl %ebp, %esp
-#    popl %ebp
-#    ret
-#
