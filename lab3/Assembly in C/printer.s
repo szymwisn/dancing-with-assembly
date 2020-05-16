@@ -6,15 +6,13 @@
 printWord:
 	pushl %ebp
 	movl %esp, %ebp
-	pushl %ebx
 	
 	pushl 8(%ebp)
 	pushl $format
 	call printf
-	addl $4, %esp	
-	popl %eax	
+	addl $8, %esp	
 
-	popl %ebx
+	movl %ebp, %esp
 	popl %ebp
 	ret
 
