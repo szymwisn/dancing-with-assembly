@@ -32,16 +32,16 @@ int main(int argc, char *argv[]) {
 
     depth = SDL_VideoModeOK(image->w, image->h, 32, flags);
     if (depth==0) {
-        if (image->format->BytesPerPixel>1) {
+        if (image->format->BytesPerPixel > 1) {
             depth=32;
         } else {
             depth=8;
         }
-    } else if ((image->format->BytesPerPixel>1) && (depth==8)) {
+    } else if ((image->format->BytesPerPixel > 1) && (depth == 8)) {
         depth = 32;
     }
 
-    if(depth==8) {
+    if (depth == 8) {
         flags |= SDL_HWPALETTE;
     }    
 
@@ -58,6 +58,8 @@ int main(int argc, char *argv[]) {
 
     Paint(image, screen);
 
+    SDL_Surface *newImage = Load_image(argv[1]); 
+
     done = 0;
     while (!done) {
         if (SDL_PollEvent(&event)) {
@@ -68,38 +70,164 @@ int main(int argc, char *argv[]) {
                         case SDLK_q:
                             done = 1;
                             break;
-                        case SDLK_SPACE:
-                        case SDLK_f:
+
+                        // TRANSFORM - ROTATE
+                        case SDLK_t:
+                            Rotate(screen, image->w, image->h);
+                            break;
+
+                        // REFLECT VERTICALLY
+                        case SDLK_v:
                             SDL_LockSurface(image);
+                            printf("Start reflecting vertically... ");
 
-                            printf("Start filtering... ");
-                            // Reflect(image->pixels, image->w, image->h, size, image->format->BytesPerPixel);
+                            Reflect_vertically(image, newImage);
+
                             printf("Done.\n"); 
-
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtered... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // REFLECT HORIZONTALLY
+                        case SDLK_h:
+                            SDL_LockSurface(image);
+                            printf("Start reflecting horizontally... ");
+
+                            Reflect_horizontally(image, newImage);
+
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtered... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // BLUR 
+                        case SDLK_b:
+                            SDL_LockSurface(image);
+                            printf("Start bluring... ");
+
+                            Blur(image->pixels, image->w, image->h, image->format->BytesPerPixel);
+
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after bluring... ");
                             Paint(image, screen);
                             printf("Done.\n");
+                            break;
 
+                        // NEGATIVE
+                        case SDLK_n:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Negative(image, newImage);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
                             break;
+
+                        // GRAYSCALE
+                        case SDLK_g:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Grayscale(image, newImage);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // DEFAULT COLORS
+                        case SDLK_0:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Color(image, newImage, 0xFF, 0xFF, 0xFF);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // RED
+                        case SDLK_1:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Color(image, newImage, 0xFF, 0x00, 0x00);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // GREEN
+                        case SDLK_2:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Color(image, newImage, 0x00, 0xFF, 0x00);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // BLUE
+                        case SDLK_3:
+                            SDL_LockSurface(image);
+                            printf("Start filtering... ");
+
+                            Color(image, newImage, 0x00, 0x00, 0xFF);
+                    
+                            printf("Done.\n"); 
+                            SDL_UnlockSurface(image);
+
+                            printf("Repainting after filtering... ");
+                            Paint(newImage, screen);
+                            printf("Done.\n");
+                            break;
+
+                        // RESET
                         case SDLK_r:
-                            printf("Reloading image... ");
+                            printf("Resetting image... ");
                             image = Load_image(argv[1]);
-                            Paint(image,screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
-                        case SDLK_s:
-                            printf("Saving new image - new.bmp ...");
-                            SDL_SaveBMP(image, "new.bmp" );
-                            printf("Done.\n");
+
                         default:
                             break;
                     }
                     break;
+
                 case SDL_QUIT:
                     done = 1;
                     break;
+
                 default:
                     break;
             }
