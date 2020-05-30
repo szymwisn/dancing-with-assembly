@@ -2,7 +2,7 @@
 
 void Rotate(SDL_Surface *screen, int width, int height) {
     SDL_Surface *new_screen;
-    new_screen = SDL_CreateRGBSurface(0,height,width,32,0,0,0,0); 
+    new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
     Uint32 old_pixel;
 
     int x, y;
@@ -112,7 +112,16 @@ void Negative(SDL_Surface *image, SDL_Surface *result){
     for(int y = 0; y < image->h; y++) {
         for(int x = 0; x < image->w; x++) {
             pixel = Get_pixel(image, x, y);         
-            pixel = ~pixel;
+            // pixel = ~pixel;
+
+            __asm__(
+                "movl %0, %%eax\n"
+                "not %%eax\n"
+                "movl %%eax, %0\n"
+                :"=r" (pixel)
+                :"r" (pixel)
+            );
+
 			Put_pixel(result, x, y, pixel);
         }
     }
