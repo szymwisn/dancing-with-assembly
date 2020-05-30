@@ -8,7 +8,7 @@
 int main(int argc, char *argv[]) {
     Uint32 flags;
     int depth, done;
-    SDL_Surface *screen, *image;
+    SDL_Surface *screen, *image, *imageCopy;
     SDL_Event event;
 
     if (!argv[1]) {
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 
     flags = SDL_SWSURFACE;
     image = Load_image(argv[1]); 
+    imageCopy = Load_image(argv[1]); 
 
     printf("\nImage params:\n width %d, height %d \n", image->w, image->h);
     printf("BitsPerPixel = %i \n", image->format->BitsPerPixel);
@@ -58,7 +59,6 @@ int main(int argc, char *argv[]) {
 
     Paint(image, screen);
 
-    SDL_Surface *newImage = Load_image(argv[1]); 
 
     done = 0;
     while (!done) {
@@ -81,13 +81,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start reflecting vertically... ");
 
-                            Reflect_vertically(image, newImage);
+                            Reflect_vertically(image, imageCopy);
 
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtered... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -96,13 +96,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start reflecting horizontally... ");
 
-                            Reflect_horizontally(image, newImage);
+                            Reflect_horizontally(image, imageCopy);
 
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtered... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -126,13 +126,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start filtering... ");
 
-                            Negative(image, newImage);
+                            Negative(image);
                     
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -141,28 +141,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start filtering... ");
 
-                            Grayscale(image, newImage);
+                            Grayscale(image, imageCopy);
                     
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
-                            printf("Done.\n");
-                            break;
-
-                        // DEFAULT COLORS
-                        case SDLK_0:
-                            SDL_LockSurface(image);
-                            printf("Start filtering... ");
-
-                            Color(image, newImage, 0xFF, 0xFF, 0xFF);
-                    
-                            printf("Done.\n"); 
-                            SDL_UnlockSurface(image);
-
-                            printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -171,13 +156,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start filtering... ");
 
-                            Color(image, newImage, 0xFF, 0x00, 0x00);
+                            Color(image, imageCopy, 0xFF, 0x00, 0x00);
                     
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -186,13 +171,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start filtering... ");
 
-                            Color(image, newImage, 0x00, 0xFF, 0x00);
+                            Color(image, imageCopy, 0x00, 0xFF, 0x00);
                     
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 
@@ -201,13 +186,13 @@ int main(int argc, char *argv[]) {
                             SDL_LockSurface(image);
                             printf("Start filtering... ");
 
-                            Color(image, newImage, 0x00, 0x00, 0xFF);
+                            Color(image, imageCopy, 0x00, 0x00, 0xFF);
                     
                             printf("Done.\n"); 
                             SDL_UnlockSurface(image);
 
                             printf("Repainting after filtering... ");
-                            Paint(newImage, screen);
+                            Paint(image, screen);
                             printf("Done.\n");
                             break;
 

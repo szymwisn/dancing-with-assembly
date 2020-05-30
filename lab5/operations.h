@@ -18,6 +18,6 @@ void Grayscale(SDL_Surface *image, SDL_Surface *result);
 
 void Color(SDL_Surface *image, SDL_Surface *result, Uint8 red, Uint8 green, Uint8 blue);
 
-void Negative(SDL_Surface *image, SDL_Surface *result);
+void Negative(SDL_Surface *image);
 
 #endif

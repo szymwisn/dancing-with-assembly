@@ -1,5 +1,7 @@
 #include "operations.h"
 
+void negativeAssembly(unsigned char *in, unsigned char *out, int imgBytes);
+
 void Rotate(SDL_Surface *screen, int width, int height) {
     SDL_Surface *new_screen;
     new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
@@ -19,26 +21,32 @@ void Rotate(SDL_Surface *screen, int width, int height) {
     SDL_UpdateRect(screen, 0, 0, 0, 0);
 } 
 
-void Reflect_horizontally(SDL_Surface *image, SDL_Surface *result) {
+void Reflect_horizontally(SDL_Surface *image, SDL_Surface *imageCopy) {
 	Uint32 pixel;
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
 
 	for(int y = 0; y < image->h; y++){
 		for(int x = 0; x < image->w; x++){ 
 			pixel = Get_pixel(image, image->w - x, y);
-			Put_pixel(result, x, y, pixel);
+			Put_pixel(imageCopy, x, y, pixel);
 		}
 	}
+
+    memcpy(image->pixels, imageCopy->pixels, imgBytes);
 }
 
-void Reflect_vertically(SDL_Surface *image, SDL_Surface *result) {
+void Reflect_vertically(SDL_Surface *image, SDL_Surface *imageCopy) {
 	Uint32 pixel;
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
 
 	for(int y = 0; y < image->h; y++){
 		for(int x = 0; x < image->w; x++){ 
             pixel = Get_pixel(image, x, image->h - y);
- 			Put_pixel(result, x, y, pixel);
+ 			Put_pixel(imageCopy, x, y, pixel);
 		}
 	}
+
+    memcpy(image->pixels, imageCopy->pixels, imgBytes);
 }
 
 void Blur(unsigned char *buf, int width, int height, char bytesPerPixel) {
@@ -70,8 +78,9 @@ void Blur(unsigned char *buf, int width, int height, char bytesPerPixel) {
 }
 
 
-void Grayscale(SDL_Surface *image, SDL_Surface *result) {
+void Grayscale(SDL_Surface *image, SDL_Surface *imageCopy) {
 	Uint32 pixel;
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
 
 	for(int y = 0; y < image->h; y++){
 		for(int x = 0; x < image->w; x++){ 
@@ -84,13 +93,16 @@ void Grayscale(SDL_Surface *image, SDL_Surface *result) {
             Uint8 colors = 0.212671f * r + 0.715160f * g + 0.072169f * b;
             pixel = (0xFF << 24) | (colors << 16) | (colors << 8) | colors;
 
-			Put_pixel(result, x, y, pixel);
+			Put_pixel(imageCopy, x, y, pixel);
 		}
 	}
+
+    memcpy(image->pixels, imageCopy->pixels, imgBytes);
 }
 
-void Color(SDL_Surface *image, SDL_Surface *result, Uint8 red, Uint8 green, Uint8 blue) {
+void Color(SDL_Surface *image, SDL_Surface *imageCopy, Uint8 red, Uint8 green, Uint8 blue) {
 	Uint32 pixel;
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
 
 	for(int y = 0; y < image->h; y++){
 		for(int x = 0; x < image->w; x++){ 
@@ -101,28 +113,18 @@ void Color(SDL_Surface *image, SDL_Surface *result, Uint8 red, Uint8 green, Uint
             Uint8 b = pixel & blue;
 
             pixel = (0xFF << 24) | (r << 16) | (g << 8) | b;
-			Put_pixel(result, x, y, pixel);
+			Put_pixel(imageCopy, x, y, pixel);
 		}
 	}
+
+    memcpy(image->pixels, imageCopy->pixels, imgBytes);
 }
 
-void Negative(SDL_Surface *image, SDL_Surface *result){
-    Uint32 pixel;
+void Negative(SDL_Surface *image) {
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
+    unsigned char *result = malloc(imgBytes);
 
-    for(int y = 0; y < image->h; y++) {
-        for(int x = 0; x < image->w; x++) {
-            pixel = Get_pixel(image, x, y);         
-            // pixel = ~pixel;
-
-            __asm__(
-                "movl %0, %%eax\n"
-                "not %%eax\n"
-                "movl %%eax, %0\n"
-                :"=r" (pixel)
-                :"r" (pixel)
-            );
-
-			Put_pixel(result, x, y, pixel);
-        }
-    }
+    negativeAssembly(image->pixels, result, imgBytes/8);
+    
+    memcpy(image->pixels, result, imgBytes);
 } 
