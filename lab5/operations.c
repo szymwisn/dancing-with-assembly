@@ -1,6 +1,8 @@
 #include "operations.h"
 
 void negativeAssembly(unsigned char *in, unsigned char *out, int imgBytes);
+void darkenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
+void lightenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 
 void Rotate(SDL_Surface *screen, int width, int height) {
     SDL_Surface *new_screen;
@@ -49,7 +51,12 @@ void Reflect_vertically(SDL_Surface *image, SDL_Surface *imageCopy) {
     memcpy(image->pixels, imageCopy->pixels, imgBytes);
 }
 
-void Blur(unsigned char *buf, int width, int height, char bytesPerPixel) {
+void Blur(SDL_Surface *image) {
+    unsigned char * buf = image->pixels;
+    int width = image->w;
+    int height = image->h;
+    char bytesPerPixel = image->format->BytesPerPixel;
+
     int rowsize = ((bytesPerPixel * 8 * width + 31) / 32) * 4;
     int i = 0, j = 0, k = 0, col = 0;
     int *sr = malloc(3 * sizeof(int));
@@ -125,6 +132,24 @@ void Negative(SDL_Surface *image) {
     unsigned char *result = malloc(imgBytes);
 
     negativeAssembly(image->pixels, result, imgBytes);
+    
+    memcpy(image->pixels, result, imgBytes);
+} 
+
+void Darken(SDL_Surface *image) {
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
+    unsigned char *result = malloc(imgBytes);
+
+    darkenAssembly(image->pixels, result, imgBytes);
+    
+    memcpy(image->pixels, result, imgBytes);
+} 
+
+void Lighten(SDL_Surface *image) {
+    int imgBytes = image->w * image->h * image->format->BytesPerPixel;
+    unsigned char *result = malloc(imgBytes);
+
+    lightenAssembly(image->pixels, result, imgBytes);
     
     memcpy(image->pixels, result, imgBytes);
 } 
