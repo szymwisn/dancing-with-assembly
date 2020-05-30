@@ -124,7 +124,7 @@ void Negative(SDL_Surface *image) {
     int imgBytes = image->w * image->h * image->format->BytesPerPixel;
     unsigned char *result = malloc(imgBytes);
 
-    negativeAssembly(image->pixels, result, imgBytes/8);
+    negativeAssembly(image->pixels, result, imgBytes);
     
     memcpy(image->pixels, result, imgBytes);
 } 

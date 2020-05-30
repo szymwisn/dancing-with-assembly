@@ -5,10 +5,15 @@
 negativeAssembly:
     pushq %rbp
     movq %rsp, %rbp
-    
-    movq %rdi, %rax                     # input pointer
-    movq %rsi, %rbx                     # output pointer
-    movq %rdx, %rcx                     # imgBytes
+
+    movq %rdx, %rax                     # imgBytes
+    movq $8, %rcx
+    movq $0, %rdx
+    divq %rcx
+    movq %rax, %rcx                     # imgBytes/8 in rcx
+
+    movq %rdi, %rax                     # input pointer in rax
+    movq %rsi, %rbx                     # output pointer in rbx
 
     movq $0, %rdi                       # reset counter
     emms
