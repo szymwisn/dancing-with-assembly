@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-void Rotate(SDL_Surface *screen, int width, int height);
+void Rotate(SDL_Surface *image, SDL_Surface *screen);
 
 void Reflect_horizontally(SDL_Surface *image, SDL_Surface *imageCopy);
 

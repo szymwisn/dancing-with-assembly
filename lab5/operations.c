@@ -4,14 +4,17 @@ void negativeAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 void darkenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 void lightenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 
-void Rotate(SDL_Surface *screen, int width, int height) {
-    SDL_Surface *new_screen;
-    new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
+void Rotate(SDL_Surface *image, SDL_Surface *screen) {
     Uint32 old_pixel;
+    SDL_Surface *new_screen;
+    
+    int width = image->w;
+    int height = image->h;
 
-    int x, y;
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
+    new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
+
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
             old_pixel = Get_pixel(screen, width - x, height - y); 
             Put_pixel(new_screen, y, x, old_pixel); 
         }
@@ -52,7 +55,7 @@ void Reflect_vertically(SDL_Surface *image, SDL_Surface *imageCopy) {
 }
 
 void Blur(SDL_Surface *image) {
-    unsigned char * buf = image->pixels;
+    unsigned char *buf = image->pixels;
     int width = image->w;
     int height = image->h;
     char bytesPerPixel = image->format->BytesPerPixel;

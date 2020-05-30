@@ -14,8 +14,8 @@ negativeAssembly:
     divq %rcx
     movq %rax, %rcx                     # imgBytes/8 in rcx
 
-    movq %rdi, %rax                     # input pointer in rax
-    movq %rsi, %rbx                     # output pointer in rbx
+    movq %rdi, %rax                     # pixels pointer in rax
+    movq %rsi, %rbx                     # result pointer in rbx
 
     movq $0, %rdi                       # reset counter
 
@@ -24,11 +24,10 @@ negativeAssembly:
         pcmpeqd %mm1, %mm1
         pxor %mm1, %mm0
         pandn %mm1, %mm1
-        movq %mm0, (%rbx, %rdi, 8)      # move new pixel to output
+        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel to result
+        
         inc %rdi
-
-        dec %rcx
-        cmp $0, %rcx
+        cmp %rdi, %rcx
         jnz loop
 
     emms

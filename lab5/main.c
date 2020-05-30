@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 
                         // TRANSFORM - ROTATE
                         case SDLK_t:
-                            Rotate(screen, image->w, image->h);
+                            Rotate(image, screen);
                             break;
 
                         // REFLECT VERTICALLY
@@ -160,6 +160,11 @@ int main(int argc, char *argv[]) {
                         case SDLK_r:
                             image = Load_image(argv[1]);
                             Paint(image, screen);
+                            break;
+
+                        // SAVE
+                        case SDLK_s:
+                            SDL_SaveBMP(image, "new.bmp" ); 
                             break;
 
                         default:

@@ -19,20 +19,18 @@ lightenAssembly:
     divq %rcx
     movq %rax, %rcx                     # imgBytes/8 in rcx
 
-    movq %rdi, %rax                     # input pointer in rax
-    movq %rsi, %rbx                     # output pointer in rbx
+    movq %rdi, %rax                     # pixels pointer in rax
+    movq %rsi, %rbx                     # result pointer in rbx
 
     movq $0, %rdi                       # reset counter
     
-    
     loop: 
         movq (%rax, %rdi, 8), %mm0      # write pixel to mm0
-        paddusb %mm1,%mm0 
-        movq %mm0, (%rbx, %rdi, 8)      # move new pixel to output
+        paddusb %mm1,%mm0               # add mask to pixel
+        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel to result
+        
         inc %rdi
-
-        dec %rcx
-        cmp $0, %rcx
+        cmp %rdi, %rcx
         jnz loop
 
     emms
