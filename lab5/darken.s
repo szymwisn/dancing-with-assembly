@@ -25,9 +25,9 @@ darkenAssembly:
     movq $0, %rdi                       # reset counter
     
     loop: 
-        movq (%rax, %rdi, 8), %mm0      # write pixel to mm0
-        psubusb %mm1,%mm0               # substract mask from pixel
-        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel to result
+        movq (%rax, %rdi, 8), %mm0      # write pixel byte to mm0
+        psubusb %mm1,%mm0               # substract mask from pixel byte
+        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel byte to result
         
         inc %rdi
         cmp %rdi, %rcx

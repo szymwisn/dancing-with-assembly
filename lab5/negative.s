@@ -20,11 +20,11 @@ negativeAssembly:
     movq $0, %rdi                       # reset counter
 
     loop: 
-        movq (%rax, %rdi, 8), %mm0      # write pixel to mm0
+        movq (%rax, %rdi, 8), %mm0      # write pixel byte to mm0
         pcmpeqd %mm1, %mm1
         pxor %mm1, %mm0
         pandn %mm1, %mm1
-        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel to result
+        movq %mm0, (%rbx, %rdi, 8)      # copy new pixel byte to result
         
         inc %rdi
         cmp %rdi, %rcx

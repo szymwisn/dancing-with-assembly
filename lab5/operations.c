@@ -5,17 +5,14 @@ void darkenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 void lightenAssembly(unsigned char *in, unsigned char *out, int imgBytes);
 
 void Rotate(SDL_Surface *image, SDL_Surface *screen) {
-    Uint32 old_pixel;
-    SDL_Surface *new_screen;
-    
     int width = image->w;
     int height = image->h;
 
-    new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
+    SDL_Surface *new_screen = SDL_CreateRGBSurface(0, height, width, 32, 0, 0, 0, 0); 
 
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            old_pixel = Get_pixel(screen, width - x, height - y); 
+            Uint32 old_pixel = Get_pixel(screen, width - x, height - y); 
             Put_pixel(new_screen, y, x, old_pixel); 
         }
     }
